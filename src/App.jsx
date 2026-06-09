@@ -3,6 +3,41 @@ import { Menu, X } from "lucide-react";
 
 export default function App(){
   const [isOpen, setIsOpen] = useState(false);
+  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+  const [status, setStatus] = useState({ type: 'idle', message: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setIsSubmitting(true);
+    setStatus({ type: 'idle', message: '' });
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Unable to send your message right now.');
+      }
+
+      setStatus({ type: 'success', message: 'Your message has been sent successfully. I will reply soon.' });
+      setFormData({ name: '', email: '', message: '' });
+    } catch (error) {
+      setStatus({ type: 'error', message: error.message || 'Something went wrong.' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return(
     <div className="bg-slate-800 text-white min-h-screen font-sans">
@@ -62,7 +97,7 @@ export default function App(){
           <div className="relative md:order-first md:mr-8 mt-12 md:mt-0">
             <div className="w-72 h-72 md:w-80 md:h-80 rounded-full bg-pink-500 p-1 shadow-2xl shadow-pink-500/20">
               <img
-                src="/Django.jpg"
+                src="/Ifaadat.jpg"
                 alt="Ifaadati Yusufu"
                 className="w-full h-full rounded-full object-cover"
               />
@@ -178,21 +213,28 @@ export default function App(){
                   </div>
                 </div>
               </div>
-              <form className="rounded-3xl border border-white/10 bg-slate-950/80 p-8 shadow-xl">
+              <form onSubmit={handleSubmit} className="rounded-3xl border border-white/10 bg-slate-950/80 p-8 shadow-xl">
                 <div className="grid gap-5">
                   <label className="text-sm text-slate-300">
                     Name
-                    <input type="text" placeholder="Your name" className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-pink-500" />
+                    <input type="text" name="name" value={formData.name} onChange={handleChange} required placeholder="Your name" className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-pink-500" />
                   </label>
                   <label className="text-sm text-slate-300">
                     Email
-                    <input type="email" placeholder="Your email" className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-pink-500" />
+                    <input type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="Your email" className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-pink-500" />
                   </label>
                   <label className="text-sm text-slate-300">
                     Message
-                    <textarea rows="5" placeholder="Tell me about your project" className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-pink-500"></textarea>
+                    <textarea name="message" rows="5" value={formData.message} onChange={handleChange} required placeholder="Tell me about your project" className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-pink-500"></textarea>
                   </label>
-                  <button className="inline-flex items-center justify-center rounded-full bg-pink-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-pink-400">Send Message</button>
+                  {status.message ? (
+                    <p className={`rounded-2xl px-4 py-3 text-sm ${status.type === 'success' ? 'bg-emerald-500/10 text-emerald-300' : 'bg-rose-500/10 text-rose-200'}`}>
+                      {status.message}
+                    </p>
+                  ) : null}
+                  <button type="submit" disabled={isSubmitting} className="inline-flex items-center justify-center rounded-full bg-pink-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-pink-400 disabled:cursor-not-allowed disabled:bg-pink-400/70">
+                    {isSubmitting ? 'Sending...' : 'Send Message'}
+                  </button>
                 </div>
               </form>
             </div>
