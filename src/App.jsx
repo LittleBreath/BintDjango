@@ -24,7 +24,18 @@ export default function App(){
         body: JSON.stringify(formData),
       });
 
-      const data = await response.json();
+      // Read raw text first to avoid JSON parse errors when the
+      // response body is empty or invalid JSON (causes 'Unexpected end of JSON input').
+      const raw = await response.text();
+      let data = {};
+      if (raw) {
+        try {
+          data = JSON.parse(raw);
+        } catch (err) {
+          console.warn('Could not parse JSON response from /api/contact:', raw);
+          data = { error: 'Invalid response from server' };
+        }
+      }
 
       if (!response.ok) {
         throw new Error(data.error || 'Unable to send your message right now.');
