@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import { supabase } from './supabaseClient.js';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -14,9 +15,22 @@ export default async function handler(request, response) {
   }
 
   try {
+    const { error: supabaseError } = await supabase.from('contacts').insert([
+      {
+        name,
+        email,
+        message,
+        created_at: new Date().toISOString(),
+      },
+    ]);
+
+    if (supabaseError) {
+      console.warn('Supabase save failed:', supabaseError);
+    }
+
     const data = await resend.emails.send({
       from: process.env.FROM_EMAIL || 'onboarding@resend.dev',
-      to: [process.env.TO_EMAIL || 'ifadathamadi@gmail.com'],
+      to: [process.env.TO_EMAIL || 'ifaadathamadi@gmail.com'],
       subject: `New contact message from ${name}`,
       html: `
         <p><strong>Name:</strong> ${name}</p>
